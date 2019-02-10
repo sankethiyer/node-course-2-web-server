@@ -66,7 +66,11 @@ app.get('/projects', (req, res) => {
         pageTitle: 'Projects page'
     });
 });
+
+app.get('/mapquest', function(request, response){
+    response.sendfile('public/example_mapquest2.html');
+});
+
 app.listen(port, () => {
     console.log("server started on " + port);
-
 });
