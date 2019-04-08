@@ -4,6 +4,9 @@ const port = process.env.PORT || 3000;
 var hbs = require('hbs');
 const fs = require('fs');
 
+const geocode = require('./geocode/geocode');
+const weather = require('./weather/weather');
+
 hbs.registerHelper('currentYear', function () {
     return new Date().getFullYear();
 });
@@ -26,21 +29,9 @@ app.use((req, res, next) => {
     next();
 });
 
-// app.use((req, res, next) => {
-//     res.render('maintenance.hbs');
-// });
-
 app.use(express.static(__dirname + "/public"));
 
 app.get('/', (req, res) => {
-    //res.send('<h1>Hello World!</h1>')
-    // res.send({
-    //     name: 'sanketh',
-    //     likes: [
-    //         'football',
-    //         'history'
-    //     ]
-    // })
     res.render('home.hbs', {
         pageTitle: 'home page',
         welcomeMessage: 'welcome message'
@@ -70,6 +61,33 @@ app.get('/projects', (req, res) => {
 app.get('/mapquest', function(request, response){
     response.sendfile('public/example_mapquest2.html');
 });
+
+app.get('/weather', (req, res) => {
+    if (!req.query.address) {
+        return res.send({
+            error: 'You must provide an address!'
+        })
+    }
+
+    geocode.geocodeAddress(req.query.address, (error, { latitude, longitude, location } = {}) => {
+        if (error) {
+            return res.send({ error })
+        }
+
+        weather.getWeather(latitude, longitude, (error, forecastData) => {
+            if (error) {
+                return res.send({ error })
+            }
+
+            res.send({
+                forecast: forecastData,
+                location,
+                address: req.query.address
+            })
+        })
+    })
+})
+
 
 app.listen(port, () => {
     console.log("server started on " + port);
